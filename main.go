@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-type Flags struct {
+type Params struct {
 	sendgridUsername   string
 	sendgridPassword   string
 	tos                string
@@ -30,19 +30,17 @@ type Flags struct {
 
 func main() {
 
-	f := &Flags{}
-	parse_flags(f)
-
+	p := &Params{}
+	parse_flags(p)
 	err_read := godotenv.Load()
 	if err_read != nil {
 		log.Fatalf("error: %v", err_read)
 	}
-
 	SENDGRID_USERNAME := os.Getenv("SENDGRID_USERNAME")
 	SENDGRID_PASSWORD := os.Getenv("SENDGRID_PASSWORD")
 
 	email := sendgrid.NewMail()
-	for _, to := range strings.Split(f.tos, ",") {
+	for _, to := range strings.Split(p.tos, ",") {
 		email.AddTo(to)
 	}
 	email.SetFrom(os.Getenv("FROM"))
@@ -61,21 +59,21 @@ func main() {
 	}
 }
 
-func parse_flags(f *Flags) {
-	flag.StringVar(&f.sendgridUsername, "sendgrid_username", "", "usage sendgrid_username")
-	flag.StringVar(&f.sendgridPassword, "sendgrid_password", "", "usage sendgrid_password")
-	flag.StringVar(&f.tos, "tos", "", "usage tos")
-	flag.StringVar(&f.recipients, "recipients", "", "usage recipients")
-	flag.StringVar(&f.ccs, "ccs", "", "usage ccs")
-	flag.StringVar(&f.ccRecipients, "cc_recipients", "", "usage cc_recipients")
-	flag.StringVar(&f.bccs, "bccs", "", "usage bccs")
-	flag.StringVar(&f.bccRecipients, "bcc_recipients", "", "usage bcc_recipients")
-	flag.StringVar(&f.from, "from", "", "usage from")
-	flag.StringVar(&f.fromName, "from_name", "", "usage from_name")
-	flag.StringVar(&f.replyTo, "reply_to", "", "usage reply_to")
-	flag.StringVar(&f.subject, "subject", "", "usage subject")
-	flag.StringVar(&f.text, "text", "", "usage text")
-	flag.StringVar(&f.html, "html", "", "usage html")
-	flag.StringVar(&f.attachmentFilePath, "attachment_file_path", "", "usage attachment_file_path")
+func parse_flags(p *Params) {
+	flag.StringVar(&p.sendgridUsername, "sendgrid_username", "", "usage sendgrid_username")
+	flag.StringVar(&p.sendgridPassword, "sendgrid_password", "", "usage sendgrid_password")
+	flag.StringVar(&p.tos, "tos", "", "usage tos")
+	flag.StringVar(&p.recipients, "recipients", "", "usage recipients")
+	flag.StringVar(&p.ccs, "ccs", "", "usage ccs")
+	flag.StringVar(&p.ccRecipients, "cc_recipients", "", "usage cc_recipients")
+	flag.StringVar(&p.bccs, "bccs", "", "usage bccs")
+	flag.StringVar(&p.bccRecipients, "bcc_recipients", "", "usage bcc_recipients")
+	flag.StringVar(&p.from, "from", "", "usage from")
+	flag.StringVar(&p.fromName, "from_name", "", "usage from_name")
+	flag.StringVar(&p.replyTo, "reply_to", "", "usage reply_to")
+	flag.StringVar(&p.subject, "subject", "", "usage subject")
+	flag.StringVar(&p.text, "text", "", "usage text")
+	flag.StringVar(&p.html, "html", "", "usage html")
+	flag.StringVar(&p.attachmentFilePath, "attachment_file_path", "", "usage attachment_file_path")
 	flag.Parse()
 }
