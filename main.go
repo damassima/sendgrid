@@ -6,7 +6,9 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/sendgrid/sendgrid-go"
 	"log"
+	"net/mail"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -34,6 +36,7 @@ func main() {
 
 	f := &Params{}
 	parse_flags(f)
+
 	err_read := godotenv.Load()
 	if err_read != nil {
 		log.Fatalf("error: %v", err_read)
@@ -42,25 +45,42 @@ func main() {
 	p := &Params{}
 	merge_params(p, f)
 
-	SENDGRID_USERNAME := os.Getenv("SENDGRID_USERNAME")
-	SENDGRID_PASSWORD := os.Getenv("SENDGRID_PASSWORD")
-
 	email := sendgrid.NewMail()
 
 	for _, to := range strings.Split(p.tos, ",") {
 		email.AddTo(to)
 	}
-	email.SetFrom(os.Getenv("FROM"))
-	email.SetFromName(os.Getenv("FROM_NAME"))
-	email.SetSubject(os.Getenv("SUBJECT"))
-	email.SetText(os.Getenv("TEXT"))
-	// file, _ := os.OpenFile("./gif.gif", os.O_RDONLY, 0600)
-	// email.AddAttachment("gif.gif", file)
-	// defer file.Close()
+	recipients, _ := mail.ParseAddressList(p.recipients)
+	email.AddRecipients(recipients)
+	for _, cc := range strings.Split(p.ccs, ",") {
+		email.AddCc(cc)
+	}
+	ccRecipients, _ := mail.ParseAddressList(p.ccRecipients)
+	email.AddCcRecipients(ccRecipients)
+	for _, bcc := range strings.Split(p.bccs, ",") {
+		email.AddBcc(bcc)
+	}
+	bccRecipients, _ := mail.ParseAddressList(p.bccRecipients)
+	email.AddBccRecipients(bccRecipients)
 
-	sg := sendgrid.NewSendGridClient(SENDGRID_USERNAME, SENDGRID_PASSWORD)
+	email.SetFrom(p.from)
+	email.SetFromName(p.fromName)
+	email.SetReplyTo(p.replyTo)
+	email.SetSubject(p.subject)
+	email.SetText(p.text)
+	email.SetHTML(p.html)
+	if filepath := p.attachmentFilePath; filepath != "" {
+		file, err := os.OpenFile(filepath, os.O_RDONLY, 0600)
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
+		email.AddAttachment(path.Base(filepath), file)
+		defer file.Close()
+	}
+
+	sg := sendgrid.NewSendGridClient(p.sendgridUsername, p.sendgridPassword)
 	if r := sg.Send(email); r == nil {
-		fmt.Println("Email sent!")
+		fmt.Printf("Email sent to %v\n", p.tos)
 	} else {
 		fmt.Println(r)
 	}
